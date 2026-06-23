@@ -1,6 +1,7 @@
 @tool class_name WAPooruClient extends HTTPRequest
 
 #region Variables
+
 enum Get {
 	TREE,
 	LANG,
@@ -28,14 +29,15 @@ var headers := [
 ]
 
 @export_category("Terminal")
-@export var print_data := true			## Show or hide the requested data.
-@export var print_image_files := true	## Prints the loaded image files.
+@export var print_data := false			## Show or hide the requested data.
 
 @onready var languages: VBoxContainer = $%Languages
 @onready var catalog: ScrollContainer = $%Catalog
 @onready var waifus: HFlowContainer = $%Waifus
+
 #endregion
 
+#region Initialize
 
 func _set_auth(auth_file: String) -> void:
 	var data: String = FileAccess.get_file_as_string(_AUTH_PATH % auth_file)
@@ -58,10 +60,11 @@ func _get_auth() -> String:
 
 func _ready() -> void:
 	_set_auth(_get_auth())
+	_init_directory(files_path)
+	_init_directory(waifu_path)
+	#_init_directory(cache_path)
 
 	if not Engine.is_editor_hint():
-		_init_directory(cache_path)
-
 		get_repo_tree()
 		await request_completed
 		set_langs_buttons(trees)
@@ -72,19 +75,23 @@ func _ready() -> void:
 
 		set_waifu_thumbnails(i_url)
 
+#endregion
+
 #region API calls
+
 ## The main function that requests various endpoints.
 ## [param url] is the main url that hosts the API.
 ## [param endpoint] is the request endpoint, e.g. /trees/master.
 ## [param method] is the method which uses this function for specific requests.
 func WAPooruClient(url: String, endpoint: String, method: String) -> void:
-	print("Request endpoint: %s" % url + endpoint + "\n")
-
 	if not url == "" or not endpoint == "":
 		var error: int = 0
 		error = request(url + endpoint, headers, HTTPClient.METHOD_GET)
-		if error == OK: print("✓ %s() run successfully." % method)
-		else: print("❌ %s() failed." % method)
+		if error == OK:
+			print("\nRequest endpoint: %s" % url + endpoint)
+			print_rich("[color=green][b]✓[/b] %s() run successfully.[/color]" % method)
+		else:
+			print("❌ %s() failed." % method)
 	else:
 		print("❌ WAPooru() failed. The url or endpoint cannot be empty.")
 
@@ -105,12 +112,15 @@ func get_language(endpoint: String) -> void:
 
 ## Returns a blob content of waifus w/ coding books.
 ## [param endpoint] is the request endpoint.
-func get_waifu_blob(endpoint: String) -> void:
+func get_waifu_blob(endpoint: String, blob_name: String) -> void:
 	query = Get.IMG
 	WAPooruClient(git_url, endpoint, "get_waifu_blob")
+	print_rich("Downloading %s blob[wave]...[/wave]" % blob_name)
+
 #endregion
 
 #region Load GUI
+
 ## Creates the languages buttons, then sets as children of Languages node.
 ## [param list] is an array of objects that contains the path and url of a language.
 func set_langs_buttons(list: Array) -> void:
@@ -172,49 +182,60 @@ func set_waifu_thumbnails(list: Array) -> void:
 	if not list.is_empty():
 		for item in list:
 			var endpoint: String = item["url"].trim_prefix(git_url)
-			get_waifu_blob(endpoint)
+			get_waifu_blob(endpoint, item["path"])
 			await request_completed
 
 
 ## Creates a texture after each image blob request.
 ## [param index] is the current index in the array of blobs.
 func set_thumbnail_texture(index: int) -> void:
-	var buffer = Marshalls.base64_to_raw(blobs[index]["content"])
-	if not buffer == null:
-		var imagetexture = load_image_from_buffer(buffer)
-		if not imagetexture == null:
-			var texture = imagetexture
-			var thumbnail := TextureButton.new()
-			var thumbnail_texture := TextureRect.new()
+	var blob: String = blobs[index]["content"]
+	if not blob == null:
+		var buffer: PackedByteArray = Marshalls.base64_to_raw(blob)
+		if not buffer == null:
+			var imagetexture = load_image_from_buffer(buffer)
+			if not imagetexture == null:
+				var texture = imagetexture
+				var thumbnail := TextureButton.new()
+				var thumbnail_texture := TextureRect.new()
 
-			# Save images as resource to load by valid resource paths
-			var image_name: String = i_url[i_url.find(blobs[index]["url"])]["path"]
-			var texture_res_path: String = "user://%s.res" % image_name
-			ResourceSaver.save(texture, texture_res_path)
+				# Save images as resource to load by valid resource paths
+				var image_name: String = i_url[index]["path"]
+				var texture_res_path: String = "user://%s.res" % image_name
+				ResourceSaver.save(texture, texture_res_path)
 
-			# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
-			#thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture_res_path, cache_path+"/"+img_file))
-			thumbnail.mouse_entered.connect(_on_thumbnail_hovered.bind(thumbnail))
-			thumbnail.mouse_exited.connect(_on_thumbnail_unhover.bind(thumbnail))
+				print_rich("Loading %s thumbnail[wave]...[/wave]" % image_name.get_file())
 
-			thumbnail.clip_contents = true
-			thumbnail.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
-			thumbnail.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
+				# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
+				thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture.get_image(), waifu_path+"/"+image_name))
+				thumbnail.mouse_entered.connect(_on_thumbnail_hovered.bind(thumbnail))
+				thumbnail.mouse_exited.connect(_on_thumbnail_unhover.bind(thumbnail))
 
-			thumbnail_texture.texture = texture
-			#thumbnail.name = img_file
-			thumbnail_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-			thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-			thumbnail_texture.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
-			thumbnail_texture.pivot_offset = Vector2(thumbnail_texture.custom_minimum_size.x/2, thumbnail_texture.custom_minimum_size.y/2)
-			thumbnail_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
-			thumbnail.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+				thumbnail.clip_contents = true
+				thumbnail.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+				thumbnail.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
 
-			thumbnail.add_child(thumbnail_texture, true)
-			waifus.add_child(thumbnail, true)
+				thumbnail_texture.texture = texture
+				thumbnail.name = image_name.get_file()
+				thumbnail_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+				thumbnail_texture.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
+				thumbnail_texture.pivot_offset = Vector2(thumbnail_texture.custom_minimum_size.x/2, thumbnail_texture.custom_minimum_size.y/2)
+				thumbnail_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
+				thumbnail.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+				thumbnail.add_child(thumbnail_texture, true)
+				waifus.add_child(thumbnail, true)
+
+				print_rich("[color=green][b]✓[/b][/color] %s thumbnail loaded successfully." % image_name.get_file())
+	else:
+		print("Blob not found, nothing to make Image resource from.")
+		return
+
 #endregion
 
 #region Lists
+
 ## Gets a list of langs trees (i.e. main dir). Use to save to trees[].
 ## [param data] is the object to get and check items from.
 func get_trees(data: Dictionary) -> Array:
@@ -240,6 +261,7 @@ func get_langs(data: Dictionary) -> Array:
 ## [param data] is the object to get and check items from.
 func get_waifu(data: Dictionary) -> Dictionary:
 	return { "url": data.get("url"), "content": data.get("content") }
+
 #endregion
 
 func _on_request_completed(_result: int, _response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
@@ -268,16 +290,17 @@ func _on_langs_btn_pressed(url: String) -> void:
 	set_waifu_thumbnails(i_url)
 
 
-## TODO: Separate texture to a sub-node and set its custom min size
-## TODO: Save image based from its ImageTexture > Image data into its proper format.
-@warning_ignore("unused_parameter")
-func _on_thumbnail_pressed(texture_path: String, file_path: String) -> void:
-	@warning_ignore("unused_variable")
-	var options: Dictionary = { "name": file_path.get_file(), "file": file_path }
+func _on_thumbnail_pressed(image: Image, image_save_path: String) -> void:
+	var format: String = image_save_path.get_extension()
+	match format:
+		"png": image.save_png(image_save_path)
+		"jpg": image.save_jpg(image_save_path, 1.0)
+		"webp": image.save_webp(image_save_path, false, 1.0)
+		"bmp": image.save_jpg(image_save_path, 1.0)
+	print(image_save_path.get_file()+" was saved successfully on "+image_save_path.get_base_dir())
 
 
 ## TODO: Show a small popup that shows its waifu's name and programming language.
-@warning_ignore("unused_parameter")
 func _on_thumbnail_hovered(button: TextureButton) -> void:
 	var tween: Tween = create_tween()
 	tween.tween_property(button.get_child(0), "self_modulate", Color(1.125, 1.125, 1.125, 1.0), 0.15).set_ease(Tween.EASE_IN_OUT)
@@ -285,7 +308,6 @@ func _on_thumbnail_hovered(button: TextureButton) -> void:
 
 
 ## TODO: Hide the small popup.
-@warning_ignore("unused_parameter")
 func _on_thumbnail_unhover(button: TextureButton) -> void:
 	var tween: Tween = create_tween()
 	tween.tween_property(button.get_child(0), "self_modulate", Color(1.0, 1.0, 1.0, 1.0), 0.15).set_ease(Tween.EASE_OUT_IN)
@@ -297,55 +319,6 @@ func _on_thumbnail_unhover(button: TextureButton) -> void:
 func _init_directory(path: String = "") -> void:
 	if not DirAccess.dir_exists_absolute(path):
 		DirAccess.make_dir_absolute(path)
-
-
-## Checks for a directory and the images it contains.
-## [param path] is the directory path to check and load images from.
-func check_images(path: String = "") -> void:
-	if not waifus.get_children() == null:
-		for node in waifus.get_children():
-			node.queue_free()
-
-	var directory := DirAccess.open(path)
-	if not directory == null:
-		waifu = directory.get_files()
-		if FileAccess.open(saves_path, FileAccess.READ) == null:
-			save_images(waifu)
-		else:
-			if not waifu == load_images(saves_path):
-				save_images(waifu)
-				waifu = load_images(saves_path)
-			else:
-				if OS.is_debug_build() and print_image_files == true:
-					print_rich("Loading cached images at [url underline=hover tooltip='Open directory at %s' href=%s.]%s[/url][wave]...[/wave]" % [cache_path, cache_path, cache_path])
-
-				for img_file in load_images(saves_path):
-					if print_image_files == true:
-						print_rich("[b][color=green]✓[/color][/b] [url underline=hover tooltip='Open %s cache file.' href=%s]%s[/url]" % [img_file, cache_path+"/"+img_file, img_file])
-
-					var image = Image.load_from_file(cache_path+"/"+img_file)
-					var texture = ImageTexture.create_from_image(image)
-					var thumbnail := TextureButton.new()
-
-					# Save images as resource to load by valid resource paths
-					var texture_res_path: String = "user://%s.res" % img_file
-					ResourceSaver.save(texture, texture_res_path)
-
-					# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
-					thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture_res_path, cache_path+"/"+img_file))
-					thumbnail.mouse_entered.connect(_on_thumbnail_hovered.bind(thumbnail))
-					thumbnail.mouse_exited.connect(_on_thumbnail_unhover.bind(thumbnail))
-
-					thumbnail.texture_normal = texture
-					thumbnail.name = img_file
-					thumbnail.ignore_texture_size = true
-					thumbnail.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_COVERED
-					thumbnail.custom_minimum_size = Vector2(350, 350)
-					thumbnail.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-					waifus.add_child(thumbnail, true)
-
-				if OS.is_debug_build() and print_image_files == true:
-					print_rich("[b][color=green][pulse]Loading images completed![/pulse][/color][/b]\n")
 
 
 ## Saves an array of images into a file.
