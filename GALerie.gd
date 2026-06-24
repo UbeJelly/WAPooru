@@ -4,17 +4,15 @@
 
 enum Get { TREE, LANG, IMG }
 
-var is_hovered_meta := false		# Toggles on hover [url]; for tooltips
+var is_hovered_meta := false		## Toggles on hover [url]; for tooltips
 
-var query: int = 0					# Current query type (e.g. Get.TREE)
-var trees: Array = []				# List of langs trees (i.e. main dir)
-var i_url: Array = []				# List of langs' images (blob urls)
-var blobs: Array = []				# List of img blobs to use as texture
+var query: int = 0					## Current query type (e.g. Get.TREE)
+var trees: Array = []				## List of langs trees (i.e. main dir)
+var i_url: Array = []				## List of langs' images (blob urls)
+var blobs: Array = []				## List of img blobs to use as texture
 
 var files_path: String = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)+"/GALerie"
-var anime_path: String = files_path+"/Anime_Girls"			## The download directory
-var cache_path: String = OS.get_user_data_dir()+"/cache"	## Caches to %AppData%/Roaming/GALerie
-var saves_path: String = cache_path+"/ImgList"				## Save file path
+var anime_path: String = files_path+"/Anime_Girls"	## The download directory
 
 ## Path of auth.json which contains data of repo owner and API token
 var _AUTH_PATH: String = ProjectSettings.globalize_path("res://.env/%s")	
@@ -26,10 +24,9 @@ var headers := [
 ]
 
 @export_category("Terminal")
-@export var print_data := false			## Show or hide the requested data.
+@export var print_data := false		## Show or hide the requested data.
 
 @onready var gui: Panel = $GUI
-@onready var sections: TabContainer = $%Sections
 @onready var languages: VBoxContainer = $%Langs
 @onready var catalog: ScrollContainer = $%Catalog
 @onready var animes: HFlowContainer = $%Gals
@@ -37,6 +34,7 @@ var headers := [
 @onready var tooltip: RichTextLabel = $%Tooltip
 
 @onready var tabs: Array = get_tree().get_nodes_in_group("Tabs")
+@onready var bars: Array = get_tree().get_nodes_in_group("Scrollbars")
 
 #endregion
 
@@ -65,8 +63,8 @@ func _ready() -> void:
 	_set_auth(_get_auth())
 	_init_directory(files_path)
 	_init_directory(anime_path)
-	#_init_directory(cache_path)
 	set_tabs()
+	set_bars()
 
 	if not Engine.is_editor_hint():
 		get_repo_tree()
@@ -81,7 +79,8 @@ func _ready() -> void:
 
 #endregion
 
-func log_print(text: String) -> void:
+## Pushes terminal outputs on Logs section.
+func push_logs(text: String) -> void:
 	logs_text.text += text+"\n"
 
 #region API calls
@@ -101,17 +100,17 @@ func GALerieClient(url: String, endpoint: String, method: String) -> void:
 			var endpoint_log := "%sRequest endpoint: %s" % [newline, url + endpoint]
 			var success_run := "[color=%s][b]✓[/b] %s() run successfully.[/color]"
 			print(endpoint_log)
-			log_print(endpoint_log)
+			push_logs(endpoint_log)
 			print_rich(success_run % ["green", method])
-			log_print(success_run % ["2aa300", method])
+			push_logs(success_run % ["2aa300", method])
 		else:
 			var failed_run := "[color=%s][b]❌[/b] %s() failed.[/color]"
 			print_rich(failed_run % ["red", method])
-			log_print(failed_run % ["cc0000", method])
+			push_logs(failed_run % ["cc0000", method])
 	else:
 		var missing_args := "[color=%s][b]❌[/b] GALerie() failed. The url or endpoint cannot be empty."
 		print_rich(missing_args % "red")
-		log_print(missing_args % "cc0000")
+		push_logs(missing_args % "cc0000")
 
 
 ## Returns a Dictionary of trees, i.e. directories in a repo branch.
@@ -135,7 +134,7 @@ func get_anime_blob(endpoint: String, blob_name: String) -> void:
 	GALerieClient(git_url, endpoint, "get_anime_blob")
 	var download_notice := "%sDownloading %s blob%s...%s"
 	print_rich(download_notice % ["", blob_name, "[wave]", "[/wave]"])
-	log_print(download_notice % [" [roll][b][i] )[/i][/b][/roll]  ", blob_name, " [bounce]", "[/bounce]"])
+	push_logs(download_notice % [" [roll][b][i] )[/i][/b][/roll]  ", blob_name, " [bounce]", "[/bounce]"])
 
 #endregion
 
@@ -226,7 +225,7 @@ func set_thumbnail_texture(index: int) -> void:
 
 				var thumbnail_load_notice := "%sLoading %s thumbnail%s...%s"
 				print_rich(thumbnail_load_notice % ["", image_name.get_file(), "[wave]", "[/wave]"])
-				log_print(thumbnail_load_notice % [" [roll][b][i] )[/i][/b][/roll]  ", image_name.get_file(), " [bounce]", "[/bounce]"])
+				push_logs(thumbnail_load_notice % [" [roll][b][i] )[/i][/b][/roll]  ", image_name.get_file(), " [bounce]", "[/bounce]"])
 
 				# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
 				thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture.get_image(), anime_path+"/"+image_name))
@@ -251,7 +250,7 @@ func set_thumbnail_texture(index: int) -> void:
 
 				var thumbnail_success := "[color=%s][b]✓[/b][/color] %s thumbnail loaded successfully."
 				print_rich(thumbnail_success % ["green", image_name.get_file()])
-				log_print(thumbnail_success % ["2aa300", image_name.get_file()])
+				push_logs(thumbnail_success % ["2aa300", image_name.get_file()])
 	else:
 		print("Blob not found, nothing to make Image resource from.")
 		return
@@ -334,10 +333,10 @@ func _on_thumbnail_pressed(image: Image, image_save_path: String) -> void:
 
 	if error == OK:
 		print_rich(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "green")
-		log_print(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "2aa300")
+		push_logs(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "2aa300")
 	else:
 		print_rich(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "red")
-		log_print(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "cc0000")
+		push_logs(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "cc0000")
 
 
 ## TODO: Show a small popup that shows its anime's name and programming language.
@@ -356,9 +355,24 @@ func _on_thumbnail_unhover(button: TextureButton) -> void:
 
 ## Sets TabContainer's tab buttons' cursor
 func set_tabs() -> void:
-	for tab in tabs:
+	for tab: TabContainer in tabs:
 		var tabbar: TabBar = tab.get_tab_bar()
 		tabbar.mouse_default_cursor_shape = Control.CursorShape.CURSOR_POINTING_HAND
+		tabbar.mouse_exited.connect(_on_tab_unhovered)
+
+		for i in tab.get_child_count():
+			tab.set_tab_metadata(i, tab.get_child(i).get_meta("tooltip_text"))
+
+
+func set_bars() -> void:
+	for bar: ScrollContainer in bars:
+		var h_scrollbar: HScrollBar = bar.get_h_scroll_bar()
+		var v_scrollbar: VScrollBar = bar.get_v_scroll_bar()
+
+		if not h_scrollbar == null:
+			h_scrollbar.mouse_default_cursor_shape = Control.CursorShape.CURSOR_HSPLIT
+		if not v_scrollbar == null:
+			v_scrollbar.mouse_default_cursor_shape = Control.CursorShape.CURSOR_VSPLIT
 
 
 ## Initializes the directory for images.
@@ -366,22 +380,6 @@ func set_tabs() -> void:
 func _init_directory(path: String = "") -> void:
 	if not DirAccess.dir_exists_absolute(path):
 		DirAccess.make_dir_absolute(path)
-
-
-## Saves an array of images into a file.
-## [param image_array] is an array of image paths.
-func save_images(image_array: PackedStringArray) -> void:
-	var file := FileAccess.open(saves_path, FileAccess.WRITE)
-	file.store_var(image_array, true)
-	file.close()
-
-
-## Loads a save file of images array.
-## [param save_file] is the path of the file to load the image array from.
-func load_images(save_file: String) -> PackedStringArray:
-	var file := FileAccess.open(save_file, FileAccess.READ)
-	var loaded_array = file.get_var(true)
-	return loaded_array
 
 
 ## Parses JSON and returns as Array, Dictionary, or String.
@@ -412,24 +410,51 @@ func parse_JSON(body: PackedByteArray) -> Variant:
 		return {}
 
 
-## Reusable signal callable for any RichTextLabel with url tags.
-## [param meta] is any object which will be executed by OS.shell_open()
+## Reusable signal callable for any hoverable nodes with metadata.
+## [param meta] is any object which will be executed by OS.shell_open().
 ## [param source] is the node which has this meta.
 func _on_meta_hover_entered(_meta: Variant, source: RichTextLabel) -> void:
 	is_hovered_meta = true
-	if source.name == "LogsText":
-		var temp_tooltip_str: String = source.get_tooltip(source.get_local_mouse_position())
-		tooltip.text = temp_tooltip_str
+	tooltip.size = Vector2.ZERO
+	tooltip.scale = Vector2.ZERO
+	tooltip.text = source.get_tooltip(source.get_local_mouse_position())
 	tooltip.show()
+	var tween: Tween = create_tween()
+	tween.tween_property(tooltip, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BOUNCE)
 
 
 ## The reverse of _on_meta_hover_entered() where it detects mouse exit.
-## [param meta] is any object which will be executed by OS.shell_open()
+## [param meta] is any object which will be executed by OS.shell_open().
 ## [param source] is the node which has this meta.
 func _on_meta_hover_exited(_meta: Variant, _source: RichTextLabel) -> void:
 	is_hovered_meta = false
+	var tween: Tween = create_tween()
+	tween.tween_property(tooltip, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_BOUNCE)
+	await tween.loop_finished
 	tooltip.hide()
 	tooltip.text = ""
+	tooltip.size = Vector2.ZERO
+	tooltip.position = Vector2(0, -32)
+
+
+func _on_tab_hovered(tab: int, source: TabContainer) -> void:
+	is_hovered_meta = true
+	tooltip.size = Vector2.ZERO
+	tooltip.scale = Vector2.ZERO
+	tooltip.text = source.get_tab_metadata(tab)
+	tooltip.show()
+	var tween: Tween = create_tween()
+	tween.tween_property(tooltip, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BOUNCE)
+
+
+func _on_tab_unhovered() -> void:
+	is_hovered_meta = false
+	var tween: Tween = create_tween()
+	tween.tween_property(tooltip, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_BOUNCE)
+	await tween.finished
+	tooltip.hide()
+	tooltip.text = ""
+	tooltip.size = Vector2.ZERO
 	tooltip.position = Vector2(0, -32)
 
 

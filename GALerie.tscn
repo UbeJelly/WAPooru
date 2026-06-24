@@ -55,8 +55,9 @@ size_flags_vertical = 3
 split_offsets = PackedInt32Array(240)
 split_offset = 240
 metadata/_tab_index = 0
+metadata/tooltip_text = "Browse anime girls with programming books"
 
-[node name="Langs" type="ScrollContainer" parent="GUI/Margin/Sections/Browse" unique_id=1292901501]
+[node name="Langs" type="ScrollContainer" parent="GUI/Margin/Sections/Browse" unique_id=1292901501 groups=["Scrollbars"]]
 layout_mode = 2
 follow_focus = true
 draw_focus_border = true
@@ -76,7 +77,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Catalog" type="ScrollContainer" parent="GUI/Margin/Sections/Browse" unique_id=2035236468]
+[node name="Catalog" type="ScrollContainer" parent="GUI/Margin/Sections/Browse" unique_id=2035236468 groups=["Scrollbars"]]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -101,6 +102,7 @@ alignment = 1
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
+metadata/tooltip_text = "Keeps track of background processes"
 
 [node name="LogsText" type="RichTextLabel" parent="GUI/Margin/Sections/Logs" unique_id=287011260]
 unique_name_in_owner = true
@@ -120,6 +122,7 @@ layout_mode = 0
 offset_top = -32.0
 offset_right = 20.0
 offset_bottom = -20.0
+scale = Vector2(1e-05, 1e-05)
 mouse_filter = 2
 theme_override_font_sizes/normal_font_size = 12
 theme_override_font_sizes/bold_font_size = 12
@@ -134,6 +137,7 @@ autowrap_mode = 0
 threaded = true
 
 [connection signal="request_completed" from="." to="." method="_on_request_completed"]
+[connection signal="tab_hovered" from="GUI/Margin/Sections" to="." method="_on_tab_hovered" flags=18]
 [connection signal="child_entered_tree" from="GUI/Margin/Sections/Logs/LogsText" to="." method="_on_child_entered_tree" flags=18]
 [connection signal="meta_hover_ended" from="GUI/Margin/Sections/Logs/LogsText" to="." method="_on_meta_hover_exited" flags=18]
 [connection signal="meta_hover_started" from="GUI/Margin/Sections/Logs/LogsText" to="." method="_on_meta_hover_entered" flags=18]
