@@ -13,6 +13,9 @@ metadata/_custom_type_script = "uid://wgc02f0axtjr"
 script = ExtResource("4_uw21i")
 metadata/_custom_type_script = "uid://dc5xi8tj2pyhh"
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_auvss"]
+draw_center = false
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uw21i"]
 content_margin_left = 10.0
 content_margin_top = 6.0
@@ -49,7 +52,7 @@ unique_name_in_owner = true
 layout_mode = 2
 current_tab = 0
 
-[node name="Browse" type="HSplitContainer" parent="GUI/Margin/Sections" unique_id=1727472176]
+[node name="🔍 Browse" type="HSplitContainer" parent="GUI/Margin/Sections" unique_id=1727472176]
 layout_mode = 2
 size_flags_vertical = 3
 split_offsets = PackedInt32Array(240)
@@ -57,12 +60,12 @@ split_offset = 240
 metadata/_tab_index = 0
 metadata/tooltip_text = "Browse anime girls with programming books"
 
-[node name="Langs" type="ScrollContainer" parent="GUI/Margin/Sections/Browse" unique_id=1292901501 groups=["Scrollbars"]]
+[node name="Langs" type="ScrollContainer" parent="GUI/Margin/Sections/🔍 Browse" unique_id=1292901501 groups=["Scrollbars"]]
 layout_mode = 2
 follow_focus = true
 draw_focus_border = true
 
-[node name="Margin" type="MarginContainer" parent="GUI/Margin/Sections/Browse/Langs" unique_id=519294174]
+[node name="Margin" type="MarginContainer" parent="GUI/Margin/Sections/🔍 Browse/Langs" unique_id=519294174]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -71,20 +74,20 @@ theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 0
 
-[node name="Langs" type="VBoxContainer" parent="GUI/Margin/Sections/Browse/Langs/Margin" unique_id=72143297]
+[node name="Langs" type="VBoxContainer" parent="GUI/Margin/Sections/🔍 Browse/Langs/Margin" unique_id=72143297]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Catalog" type="ScrollContainer" parent="GUI/Margin/Sections/Browse" unique_id=2035236468 groups=["Scrollbars"]]
+[node name="Catalog" type="ScrollContainer" parent="GUI/Margin/Sections/🔍 Browse" unique_id=2035236468 groups=["Scrollbars"]]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 follow_focus = true
 draw_focus_border = true
 
-[node name="Margin" type="MarginContainer" parent="GUI/Margin/Sections/Browse/Catalog" unique_id=539742964]
+[node name="Margin" type="MarginContainer" parent="GUI/Margin/Sections/🔍 Browse/Catalog" unique_id=539742964]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -93,18 +96,18 @@ theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
-[node name="Gals" type="HFlowContainer" parent="GUI/Margin/Sections/Browse/Catalog/Margin" unique_id=1735141251]
+[node name="Gals" type="HFlowContainer" parent="GUI/Margin/Sections/🔍 Browse/Catalog/Margin" unique_id=1735141251]
 unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
 
-[node name="Logs" type="MarginContainer" parent="GUI/Margin/Sections" unique_id=1046811525]
+[node name="📃 Logs" type="MarginContainer" parent="GUI/Margin/Sections" unique_id=1046811525]
 visible = false
 layout_mode = 2
 metadata/_tab_index = 1
-metadata/tooltip_text = "Keeps track of background processes"
+metadata/tooltip_text = "Keep track of background processes"
 
-[node name="LogsText" type="RichTextLabel" parent="GUI/Margin/Sections/Logs" unique_id=287011260]
+[node name="LogsText" type="RichTextLabel" parent="GUI/Margin/Sections/📃 Logs" unique_id=287011260]
 unique_name_in_owner = true
 layout_mode = 2
 focus_mode = 2
@@ -115,13 +118,41 @@ custom_effects = [SubResource("RichTextEffect_uw21i"), SubResource("RichTextEffe
 threaded = true
 selection_enabled = true
 
+[node name="⚙️ Settings" type="MarginContainer" parent="GUI/Margin/Sections" unique_id=1715341131]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+metadata/tooltip_text = "Change parameters for functionality"
+
+[node name="Buttons" type="VBoxContainer" parent="GUI/Margin/Sections/⚙️ Settings" unique_id=1253772969]
+layout_mode = 2
+
+[node name="PushLogOutput" type="HBoxContainer" parent="GUI/Margin/Sections/⚙️ Settings/Buttons" unique_id=979316002]
+layout_mode = 2
+
+[node name="PushLogOutputToggle" type="CheckButton" parent="GUI/Margin/Sections/⚙️ Settings/Buttons/PushLogOutput" unique_id=1623074573]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Push Log Output"
+
+[node name="Info" type="RichTextLabel" parent="GUI/Margin/Sections/⚙️ Settings/Buttons/PushLogOutput" unique_id=1901583867]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_auvss")
+bbcode_enabled = true
+text = "Prints log outputs on [font embolden=0.75][color=purple]Logs[/color][/font] section. Useful for keeping track of information in the background."
+autowrap_mode = 0
+
 [node name="Tooltip" type="RichTextLabel" parent="GUI" unique_id=971041386]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
-offset_top = -32.0
-offset_right = 20.0
-offset_bottom = -20.0
+offset_left = 344.0
+offset_top = 140.0
+offset_right = 400.0
+offset_bottom = 169.0
 scale = Vector2(1e-05, 1e-05)
 mouse_filter = 2
 theme_override_font_sizes/normal_font_size = 12
@@ -138,6 +169,8 @@ threaded = true
 
 [connection signal="request_completed" from="." to="." method="_on_request_completed"]
 [connection signal="tab_hovered" from="GUI/Margin/Sections" to="." method="_on_tab_hovered" flags=18]
-[connection signal="child_entered_tree" from="GUI/Margin/Sections/Logs/LogsText" to="." method="_on_child_entered_tree" flags=18]
-[connection signal="meta_hover_ended" from="GUI/Margin/Sections/Logs/LogsText" to="." method="_on_meta_hover_exited" flags=18]
-[connection signal="meta_hover_started" from="GUI/Margin/Sections/Logs/LogsText" to="." method="_on_meta_hover_entered" flags=18]
+[connection signal="child_entered_tree" from="GUI/Margin/Sections/📃 Logs/LogsText" to="." method="_on_child_entered_tree" flags=18]
+[connection signal="meta_clicked" from="GUI/Margin/Sections/📃 Logs/LogsText" to="." method="_on_meta_clicked"]
+[connection signal="meta_hover_ended" from="GUI/Margin/Sections/📃 Logs/LogsText" to="." method="_on_meta_hover_exited" flags=18]
+[connection signal="meta_hover_started" from="GUI/Margin/Sections/📃 Logs/LogsText" to="." method="_on_meta_hover_entered" flags=18]
+[connection signal="toggled" from="GUI/Margin/Sections/⚙️ Settings/Buttons/PushLogOutput/PushLogOutputToggle" to="." method="_on_setting_toggled" flags=18]

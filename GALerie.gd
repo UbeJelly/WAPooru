@@ -4,19 +4,21 @@
 
 enum Get { TREE, LANG, IMG }
 
-var is_hovered_meta := false		## Toggles on hover [url]; for tooltips
+var is_hovered_meta := false	## Toggles on hover [url]; for tooltips
+var push_log_output := true
+var settings_values := { "push_log_output": push_log_output }
 
-var query: int = 0					## Current query type (e.g. Get.TREE)
-var trees: Array = []				## List of langs trees (i.e. main dir)
-var i_url: Array = []				## List of langs' images (blob urls)
-var blobs: Array = []				## List of img blobs to use as texture
+var query: int = 0		## Current query type (e.g. Get.TREE)
+var trees: Array = []	## List of langs trees (i.e. main dir)
+var i_url: Array = []	## List of langs' images (blob urls)
+var blobs: Array = []	## List of img blobs to use as texture
 
 var files_path: String = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)+"/GALerie"
-var anime_path: String = files_path+"/Anime_Girls"	## The download directory
+var anime_path: String = files_path+"/Anime_Girls"		## The download directory
+var config_sav: String = files_path+"/settings.json"	## The settings save file
 
 ## Path of auth.json which contains data of repo owner and API token
-var _AUTH_PATH: String = ProjectSettings.globalize_path("res://.env/%s")	
-
+var _AUTH_PATH: String = ProjectSettings.globalize_path("res://.env/%s")
 var git_url := "https://api.github.com/repos/%s/Anime-Girls-Holding-Programming-Books/git"
 var headers := [
 	"Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5",
@@ -32,9 +34,48 @@ var headers := [
 @onready var animes: HFlowContainer = $%Gals
 @onready var logs_text: RichTextLabel = $%LogsText
 @onready var tooltip: RichTextLabel = $%Tooltip
+@onready var push_log_output_toggle: CheckButton = $%PushLogOutputToggle
 
 @onready var tabs: Array = get_tree().get_nodes_in_group("Tabs")
 @onready var bars: Array = get_tree().get_nodes_in_group("Scrollbars")
+
+#endregion
+
+#region Settings
+
+## Saves a Dictionary of settings values into a file.
+## [param save_data] are settings values to save.
+func save_settings(save_data: Dictionary) -> void:
+	var file := FileAccess.open(config_sav, FileAccess.WRITE)
+	var json_text = JSON.stringify(save_data, "\t")
+	if file:
+		file.store_string(json_text)
+		file.close()
+
+
+## Loads a save file of settings values.
+## [param save_file] is the path of the file to load the settings values from.
+func load_settings(save_file: String) -> Dictionary:
+	var data := {}
+	if FileAccess.file_exists(save_file):
+		var file = FileAccess.open(save_file, FileAccess.READ)
+		var json_text = file.get_as_text()
+		data = JSON.parse_string(json_text)
+		file.close()
+	return data
+
+
+## Pushes terminal outputs on Logs section.
+func push_logs(text: String) -> void:
+	logs_text.text += text+"\n"
+
+
+func _on_setting_toggled(toggled_on: bool, source: BaseButton) -> void:
+	match source.name:
+		"PushLogOutputToggle":
+			push_log_output = toggled_on
+			settings_values["push_log_output"] = push_log_output
+			save_settings(settings_values)
 
 #endregion
 
@@ -63,6 +104,11 @@ func _ready() -> void:
 	_set_auth(_get_auth())
 	_init_directory(files_path)
 	_init_directory(anime_path)
+
+	settings_values = load_settings(config_sav)
+	push_log_output = settings_values["push_log_output"]
+	push_log_output_toggle.button_pressed = push_log_output
+
 	set_tabs()
 	set_bars()
 
@@ -79,10 +125,6 @@ func _ready() -> void:
 
 #endregion
 
-## Pushes terminal outputs on Logs section.
-func push_logs(text: String) -> void:
-	logs_text.text += text+"\n"
-
 #region API calls
 
 ## The main function that requests various endpoints.
@@ -94,23 +136,28 @@ func GALerieClient(url: String, endpoint: String, method: String) -> void:
 		var error: int = 0
 		error = request(url + endpoint, headers, HTTPClient.METHOD_GET)
 		if error == OK:
-			var newline := ""
-			if not method == "get_repo_tree":
-				newline = "\n"
-			var endpoint_log := "%sRequest endpoint: %s" % [newline, url + endpoint]
-			var success_run := "[color=%s][b]✓[/b] %s() run successfully.[/color]"
-			print(endpoint_log)
-			push_logs(endpoint_log)
-			print_rich(success_run % ["green", method])
-			push_logs(success_run % ["2aa300", method])
+			if push_log_output == true:
+				var newline := ""
+				if not method == "get_repo_tree":
+					newline = "\n"
+
+				var endpoint_log := "%sRequest endpoint: %s" % [newline, url + endpoint]
+				var success_run := "[color=%s][b]✓[/b] %s() run successfully.[/color]"
+
+				print(endpoint_log)
+				push_logs(endpoint_log)
+				print_rich(success_run % ["green", method])
+				push_logs(success_run % ["2aa300", method])
 		else:
-			var failed_run := "[color=%s][b]❌[/b] %s() failed.[/color]"
-			print_rich(failed_run % ["red", method])
-			push_logs(failed_run % ["cc0000", method])
+			if push_log_output == true:
+				var failed_run := "[color=%s][b]❌[/b] %s() failed.[/color]"
+				print_rich(failed_run % ["red", method])
+				push_logs(failed_run % ["cc0000", method])
 	else:
-		var missing_args := "[color=%s][b]❌[/b] GALerie() failed. The url or endpoint cannot be empty."
-		print_rich(missing_args % "red")
-		push_logs(missing_args % "cc0000")
+		if push_log_output == true:
+			var missing_args := "[color=%s][b]❌[/b] GALerie() failed. The url or endpoint cannot be empty."
+			print_rich(missing_args % "red")
+			push_logs(missing_args % "cc0000")
 
 
 ## Returns a Dictionary of trees, i.e. directories in a repo branch.
@@ -132,9 +179,11 @@ func get_language(endpoint: String) -> void:
 func get_anime_blob(endpoint: String, blob_name: String) -> void:
 	query = Get.IMG
 	GALerieClient(git_url, endpoint, "get_anime_blob")
-	var download_notice := "%sDownloading %s blob%s...%s"
-	print_rich(download_notice % ["", blob_name, "[wave]", "[/wave]"])
-	push_logs(download_notice % [" [roll][b][i] )[/i][/b][/roll]  ", blob_name, " [bounce]", "[/bounce]"])
+
+	if push_log_output == true:
+		var download_notice := "%sDownloading %s blob%s...%s"
+		print_rich(download_notice % ["", blob_name, "[wave]", "[/wave]"])
+		push_logs(download_notice % [" [roll][b][i] )[/i][/b][/roll]  ", blob_name, " [bounce]", "[/bounce]"])
 
 #endregion
 
@@ -223,9 +272,10 @@ func set_thumbnail_texture(index: int) -> void:
 				var texture_res_path: String = "user://%s.res" % image_name
 				ResourceSaver.save(texture, texture_res_path)
 
-				var thumbnail_load_notice := "%sLoading %s thumbnail%s...%s"
-				print_rich(thumbnail_load_notice % ["", image_name.get_file(), "[wave]", "[/wave]"])
-				push_logs(thumbnail_load_notice % [" [roll][b][i] )[/i][/b][/roll]  ", image_name.get_file(), " [bounce]", "[/bounce]"])
+				if push_log_output == true:
+					var thumbnail_load_notice := "%sLoading %s thumbnail%s...%s"
+					print_rich(thumbnail_load_notice % ["", image_name.get_file(), "[wave]", "[/wave]"])
+					push_logs(thumbnail_load_notice % [" [roll][b][i] )[/i][/b][/roll]  ", image_name.get_file(), " [bounce]", "[/bounce]"])
 
 				# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
 				thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture.get_image(), anime_path+"/"+image_name))
@@ -248,9 +298,10 @@ func set_thumbnail_texture(index: int) -> void:
 				thumbnail.add_child(thumbnail_texture, true)
 				animes.add_child(thumbnail, true)
 
-				var thumbnail_success := "[color=%s][b]✓[/b][/color] %s thumbnail loaded successfully."
-				print_rich(thumbnail_success % ["green", image_name.get_file()])
-				push_logs(thumbnail_success % ["2aa300", image_name.get_file()])
+				if push_log_output == true:
+					var thumbnail_success := "[color=%s][b]✓[/b][/color] %s thumbnail loaded successfully."
+					print_rich(thumbnail_success % ["green", image_name.get_file()])
+					push_logs(thumbnail_success % ["2aa300", image_name.get_file()])
 	else:
 		print("Blob not found, nothing to make Image resource from.")
 		return
@@ -332,11 +383,13 @@ func _on_thumbnail_pressed(image: Image, image_save_path: String) -> void:
 		"bmp": error = image.save_jpg(image_save_path, 1.0)
 
 	if error == OK:
-		print_rich(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "green")
-		push_logs(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "2aa300")
+		if push_log_output == true:
+			print_rich(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "green")
+			push_logs(error_msg % ["[color=%s][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths), "[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths), "[/url]\n"] % "2aa300")
 	else:
-		print_rich(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "red")
-		push_logs(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "cc0000")
+		if push_log_output == true:
+			print_rich(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "red")
+			push_logs(error_msg % ["[color=%s][b]❌ Failed to save[/b][/color] ", " on ", "\n"] % "cc0000")
 
 
 ## TODO: Show a small popup that shows its anime's name and programming language.
@@ -410,6 +463,8 @@ func parse_JSON(body: PackedByteArray) -> Variant:
 		return {}
 
 
+#region Hover/click events
+
 ## Reusable signal callable for any hoverable nodes with metadata.
 ## [param meta] is any object which will be executed by OS.shell_open().
 ## [param source] is the node which has this meta.
@@ -435,6 +490,10 @@ func _on_meta_hover_exited(_meta: Variant, _source: RichTextLabel) -> void:
 	tooltip.text = ""
 	tooltip.size = Vector2.ZERO
 	tooltip.position = Vector2(0, -32)
+
+
+func _on_meta_clicked(meta: Variant) -> void:
+	OS.shell_open(meta)
 
 
 func _on_tab_hovered(tab: int, source: TabContainer) -> void:
@@ -466,6 +525,9 @@ func _process(_delta: float) -> void:
 
 
 func _on_child_entered_tree(node: Node, source: Node) -> void:
+	# Remove default tooltip to display custom tooltip only
 	if node is PopupPanel:
 		if source.name == "LogsText":
 			node.queue_free()
+
+#endregion

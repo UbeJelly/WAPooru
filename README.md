@@ -1,8 +1,5 @@
 # GALerie - Gals and Programming Books Gallery
 
-> [!NOTE]  
-> This is still in very early stage. Expect breaking stuff.  
-
 ![browse_screenshot.png](.github/img/browse_screenshot.png)
 
 Fetches images of anime girls with programming books from https://github.com/cat-milk/Anime-Girls-Holding-Programming-Books thru Github REST API.
@@ -14,6 +11,14 @@ You can click on a thumbnail to save the image at `~/Documents/GALerie/Anime_Gir
 There's a `Logs` section where it keeps track of some things in the background. It also `print_rich()` on Godot's terminal but only with supported built-in effects, i.e. no custom effects.
 
 ![logs_screenshot.png](.github/img/logs_screenshot.png)
+
+## Features
+
+- [x] Browse - shows the programming books and anime girls to choose and download from.
+- [x] Logs - shows the background information like request status, loading, and saving images.
+- [x] Settings - shows the parameters that can be changed to affect some program functions.
+- [x] Animations - hover effects on thumbnails, tooltips pop in/out, custom effects on `Logs`.
+- [x] Rate limit - mainly for testing purposes, but can also be applied on export. (see [Testing](#testing))
 
 ## Process
 
@@ -40,3 +45,5 @@ To setup this project for testing, follow these steps:
 
 ## License
 Uses MIT license. See [LICENSE.md](LICENSE.md)
+
+Icons used for the default theme resource `toggle_off.svg` and `toggle_on.svg` are under the famicon's [MIT License](https://github.com/familyjs/famicons/blob/main/LICENSE).
