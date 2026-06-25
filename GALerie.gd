@@ -8,14 +8,17 @@ var is_hovered_meta := false	## Toggles on hover [url]; for tooltips
 var push_log_output := true
 var settings_values := { "push_log_output": push_log_output }
 
-var query: int = 0		## Current query type (e.g. Get.TREE)
-var trees: Array = []	## List of langs trees (i.e. main dir)
-var i_url: Array = []	## List of langs' images (blob urls)
-var blobs: Array = []	## List of img blobs to use as texture
+var query: int = 0			## Current query type (e.g. Get.TREE)
+var trees: Array = []		## List of langs trees (i.e. main dir)
+var i_url: Array = []		## List of langs' images (blob urls)
+var blobs: Array = []		## List of img blobs to use as texture
+var cache_blobs: Array = []	## List of cached texture resources
 
 var files_path: String = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)+"/GALerie"
-var anime_path: String = files_path+"/Anime_Girls"		## The download directory
-var config_sav: String = files_path+"/settings.json"	## The settings save file
+var anime_path: String = files_path+"/Anime_Girls"			## The download directory
+var config_sav: String = files_path+"/settings.json"		## The settings save file
+var cache_path: String = OS.get_user_data_dir()+"/cache"	## %AppData%/Roaming/GALerie/cache
+var saves_path: String = cache_path+"/caches.json"			## Cache data save file
 
 ## Path of auth.json which contains data of repo owner and API token
 var _AUTH_PATH: String = ProjectSettings.globalize_path("res://.env/%s")
@@ -100,10 +103,28 @@ func _get_auth() -> String:
 	return JSON_file_name
 
 
+## Initializes the directory for images.
+## [param path] is the directory path to save and load images from.
+func _init_directory(path: String = "") -> void:
+	if not DirAccess.dir_exists_absolute(path):
+		DirAccess.make_dir_absolute(path)
+
+
+## Loads saved texture resources from cache_path.
+## [param path] is the directory of the cached files.
+func load_cached_files(path: String) -> void:
+	var dir = DirAccess.open(path)
+	if dir:
+		for file in dir.get_files():
+			if file.get_extension().to_lower() == "res":
+				cache_blobs.append(file.get_file().trim_suffix(".res"))
+
+
 func _ready() -> void:
 	_set_auth(_get_auth())
 	_init_directory(files_path)
 	_init_directory(anime_path)
+	load_cached_files(cache_path)
 
 	settings_values = load_settings(config_sav)
 	push_log_output = settings_values["push_log_output"]
@@ -249,62 +270,76 @@ func load_image_from_buffer(buffer: PackedByteArray) -> ImageTexture:
 func set_anime_thumbnails(list: Array) -> void:
 	if not list.is_empty():
 		for item in list:
-			var endpoint: String = item["url"].trim_prefix(git_url)
-			get_anime_blob(endpoint, item["path"])
-			await request_completed
+			var endpoint: String = ""
+			if item["url"].trim_prefix(git_url) == "cached":
+				set_thumbnail_texture(list.find(item))
+			else:
+				endpoint = item["url"].trim_prefix(git_url)
+				get_anime_blob(endpoint, item["path"])
+				await request_completed
 
 
 ## Creates a texture after each image blob request.
 ## [param index] is the current index in the array of blobs.
 func set_thumbnail_texture(index: int) -> void:
-	var blob: String = blobs[index]["content"]
-	if not blob == null:
-		var buffer: PackedByteArray = Marshalls.base64_to_raw(blob)
-		if not buffer == null:
-			var imagetexture = load_image_from_buffer(buffer)
-			if not imagetexture == null:
-				var texture = imagetexture
-				var thumbnail := TextureButton.new()
-				var thumbnail_texture := TextureRect.new()
+	if i_url.size() > 0:
+		var image_name: String = ""
+		var texture = null
+		var thumbnail := TextureButton.new()
+		var thumbnail_texture := TextureRect.new()
 
-				# Save images as resource to load by valid resource paths
-				var image_name: String = i_url[index]["path"]
-				var texture_res_path: String = "user://%s.res" % image_name
-				ResourceSaver.save(texture, texture_res_path)
+		if not i_url[index]["url"] == "cached":
+			var blob: String = blobs[index]["content"]
+			if not blob == null:
+				var buffer: PackedByteArray = Marshalls.base64_to_raw(blob)
+				if not buffer == null:
+					var imagetexture = load_image_from_buffer(buffer)
+					if not imagetexture == null:
+						texture = imagetexture
 
-				if push_log_output == true:
-					var thumbnail_load_notice := "%sLoading %s thumbnail%s...%s"
-					print_rich(thumbnail_load_notice % ["", image_name.get_file(), "[wave]", "[/wave]"])
-					push_logs(thumbnail_load_notice % [" [roll][b][i] )[/i][/b][/roll]  ", image_name.get_file(), " [bounce]", "[/bounce]"])
+						# Save images as resource to load by valid resource paths
+						image_name = i_url[index]["path"]
+						var texture_res_path: String = cache_path+"/%s.res" % image_name
+						ResourceSaver.save(texture, texture_res_path)
+						thumbnail_texture.texture = texture
+			else:
+				print("Blob not found, nothing to make Image resource from.")
 
-				# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
-				thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture.get_image(), anime_path+"/"+image_name))
-				thumbnail.mouse_entered.connect(_on_thumbnail_hovered.bind(thumbnail))
-				thumbnail.mouse_exited.connect(_on_thumbnail_unhover.bind(thumbnail))
+		else:
+			image_name = i_url[index]["path"]
+			texture = load(cache_path+"/%s.res" % image_name)
+			thumbnail_texture.texture = texture
 
-				thumbnail.clip_contents = true
-				thumbnail.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
-				thumbnail.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
+		if push_log_output == true:
+			var thumbnail_load_notice := "%sLoading %s thumbnail%s...%s"
+			print_rich(thumbnail_load_notice % ["", image_name.get_file(), "[wave]", "[/wave]"])
+			push_logs(thumbnail_load_notice % [" [roll][b][i] )[/i][/b][/roll]  ", image_name.get_file(), " [bounce]", "[/bounce]"])
 
-				thumbnail_texture.texture = texture
-				thumbnail.name = image_name.get_file()
-				thumbnail_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-				thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-				thumbnail_texture.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
-				thumbnail_texture.pivot_offset = Vector2(thumbnail_texture.custom_minimum_size.x/2, thumbnail_texture.custom_minimum_size.y/2)
-				thumbnail_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
-				thumbnail.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		# Bind _on_thumbnail_pressed & its args to TextureButton.pressed signal
+		thumbnail.pressed.connect(_on_thumbnail_pressed.bind(texture.get_image(), anime_path+"/"+image_name))
+		thumbnail.mouse_entered.connect(_on_thumbnail_hovered.bind(thumbnail))
+		thumbnail.mouse_exited.connect(_on_thumbnail_unhover.bind(thumbnail))
 
-				thumbnail.add_child(thumbnail_texture, true)
-				animes.add_child(thumbnail, true)
+		thumbnail.clip_contents = true
+		thumbnail.clip_children = CanvasItem.CLIP_CHILDREN_AND_DRAW
+		thumbnail.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
 
-				if push_log_output == true:
-					var thumbnail_success := "[color=%s][b]✓[/b][/color] %s thumbnail loaded successfully."
-					print_rich(thumbnail_success % ["green", image_name.get_file()])
-					push_logs(thumbnail_success % ["2aa300", image_name.get_file()])
-	else:
-		print("Blob not found, nothing to make Image resource from.")
-		return
+		thumbnail.name = image_name.get_file()
+		thumbnail.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+		thumbnail.add_child(thumbnail_texture, true)
+		animes.add_child(thumbnail, true)
+
+		if push_log_output == true:
+			var thumbnail_success := "[color=%s][b]✓[/b][/color] %s thumbnail loaded successfully."
+			print_rich(thumbnail_success % ["green", image_name.get_file()])
+			push_logs(thumbnail_success % ["2aa300", image_name.get_file()])
+
+		thumbnail_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		thumbnail_texture.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
+		thumbnail_texture.pivot_offset = Vector2(thumbnail_texture.custom_minimum_size.x/2, thumbnail_texture.custom_minimum_size.y/2)
+		thumbnail_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 #endregion
 
@@ -324,10 +359,14 @@ func get_trees(data: Dictionary) -> Array:
 ## [param data] is the object to get and check items from.
 func get_langs(data: Dictionary) -> Array:
 	var list: Array = []
+	var obj := {}
 	for item in data["tree"]:
 		if item["type"] == "blob":
-			var obj := { "path": item["path"], "url": item["url"] }
-			list.append(obj)
+			if not item["path"].trim_suffix(".res") in cache_blobs: # ignore already cached texture resources
+				obj = { "path": item["path"], "url": item["url"] }
+			else:
+				obj = { "path": item["path"], "url": "cached" }
+		list.append(obj)
 	return list
 
 
@@ -426,13 +465,6 @@ func set_bars() -> void:
 			h_scrollbar.mouse_default_cursor_shape = Control.CursorShape.CURSOR_HSPLIT
 		if not v_scrollbar == null:
 			v_scrollbar.mouse_default_cursor_shape = Control.CursorShape.CURSOR_VSPLIT
-
-
-## Initializes the directory for images.
-## [param path] is the directory path to save and load images from.
-func _init_directory(path: String = "") -> void:
-	if not DirAccess.dir_exists_absolute(path):
-		DirAccess.make_dir_absolute(path)
 
 
 ## Parses JSON and returns as Array, Dictionary, or String.

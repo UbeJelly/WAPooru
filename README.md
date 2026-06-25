@@ -17,6 +17,7 @@ There's a `Logs` section where it keeps track of some things in the background. 
 - [x] Browse - shows the programming books and anime girls to choose and download from.
 - [x] Logs - shows the background information like request status, loading, and saving images.
 - [x] Settings - shows the parameters that can be changed to affect some program functions.
+- [x] Cache - the existing texture resources in memory are skipped from http requests.
 - [x] Animations - hover effects on thumbnails, tooltips pop in/out, custom effects on `Logs`.
 - [x] Rate limit - mainly for testing purposes, but can also be applied on export. (see [Testing](#testing))
 
