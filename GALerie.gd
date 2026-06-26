@@ -14,11 +14,11 @@ var settings_values := {
 	"sync_no_motions": sync_no_motions,
 }
 
-var query: int = 0			## Current query type (e.g. Get.TREE)
-var trees: Array = []		## List of langs trees (i.e. main dir)
-var i_url: Array = []		## List of langs' images (blob urls)
-var blobs: Array = []		## List of img blobs to use as texture
-var cache_blobs: Array = []	## List of cached texture resources
+var query: int = 0				## Current query type (e.g. Get.TREE)
+var trees: Array = []			## List of langs trees (i.e. main dir)
+var i_url: Array = []			## List of langs' images (blob urls)
+var blobs: Array = []			## List of img blobs to use as texture
+var cache_blobs: Array = []		## List of cached texture resources
 
 var files_path: String = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)+"/GALerie"
 var anime_path: String = files_path+"/Anime_Girls"			## The download directory
@@ -107,45 +107,59 @@ func _on_setting_toggled(toggled_on: bool, source: BaseButton) -> void:
 func _init_settings() -> void:
 	load_cached_files(cache_path)
 
-	logs_text.install_effect(bounce_fx)
-	logs_text.install_effect(roll_fx)
+	logs_text.custom_effects = []
+
+	if not Engine.is_editor_hint():
+		logs_text.install_effect(bounce_fx)
+		logs_text.install_effect(roll_fx)
 
 	if DisplayServer.accessibility_should_reduce_animation() == 1:
 		sync_no_motions = true
+		settings_values["sync_no_motions"] = sync_no_motions
 	else:
 		sync_no_motions = false
-
-	settings_values["sync_no_motions"] = sync_no_motions
+		settings_values["sync_no_motions"] = sync_no_motions
 	sync_no_motions_toggle.button_pressed = sync_no_motions
-	save_settings(settings_values)
 
+	save_settings(settings_values)
 	settings_values = load_settings(config_sav)
 
-	if settings_values["allow_animation"] == true:
-		if settings_values["sync_no_motions"] == true:
-			allow_animation = false
-			allow_animation_toggle.button_mask = 0
-			allow_animation_toggle.shortcut_feedback = false
-			allow_animation_toggle.shortcut_in_tooltip = false
-			allow_animation_toggle.focus_mode = Control.FOCUS_NONE
-			allow_animation_toggle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			allow_animation_toggle.mouse_default_cursor_shape = Control.CURSOR_ARROW
-		else:
-			allow_animation = settings_values["allow_animation"]
-			allow_animation_toggle.button_mask = 1
-			allow_animation_toggle.shortcut_feedback = true
-			allow_animation_toggle.shortcut_in_tooltip = true
-			allow_animation_toggle.focus_mode = Control.FOCUS_ALL
-			allow_animation_toggle.mouse_filter = Control.MOUSE_FILTER_STOP
-			allow_animation_toggle.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	if sync_no_motions == true:
+		settings_values["allow_animation"] = false
+	else:
+		settings_values["allow_animation"] = allow_animation
+
+	save_settings(settings_values)
+	settings_values = load_settings(config_sav)
 
 	push_log_output = settings_values["push_log_output"]
 	push_log_output_toggle.button_pressed = push_log_output
-	allow_animation_toggle.button_pressed = allow_animation
-	bounce_fx._set("animated", allow_animation)
-	roll_fx._set("animated", allow_animation)
 
-	save_settings(settings_values) # just a fail-safe
+	save_settings(settings_values)
+	settings_values = load_settings(config_sav)
+
+	if settings_values["allow_animation"] == true:
+		allow_animation = settings_values["allow_animation"]
+		allow_animation_toggle.button_mask = 1
+		allow_animation_toggle.shortcut_feedback = true
+		allow_animation_toggle.shortcut_in_tooltip = true
+		allow_animation_toggle.focus_mode = Control.FOCUS_ALL
+		allow_animation_toggle.mouse_filter = Control.MOUSE_FILTER_STOP
+		allow_animation_toggle.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		allow_animation_toggle.button_pressed = true
+		bounce_fx._set("animated", true)
+		roll_fx._set("animated", true)
+	else:
+		allow_animation = false
+		allow_animation_toggle.button_mask = 0
+		allow_animation_toggle.shortcut_feedback = false
+		allow_animation_toggle.shortcut_in_tooltip = false
+		allow_animation_toggle.focus_mode = Control.FOCUS_NONE
+		allow_animation_toggle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		allow_animation_toggle.mouse_default_cursor_shape = Control.CURSOR_ARROW
+		allow_animation_toggle.button_pressed = false
+		bounce_fx._set("animated", false)
+		roll_fx._set("animated", false)
 
 #endregion
 
@@ -353,6 +367,8 @@ func set_thumbnail_texture(index: int) -> void:
 		var texture = null
 		var thumbnail := TextureButton.new()
 		var thumbnail_texture := TextureRect.new()
+		var thumbnail_info = null
+		var thumbnail_info_text = null
 
 		if not i_url[index]["url"] == "cached":
 			var blob: String = blobs[index]["content"]
@@ -395,6 +411,25 @@ func set_thumbnail_texture(index: int) -> void:
 		thumbnail.name = image_name.get_file()
 		thumbnail.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
+		thumbnail_info = load("res://ThumbnailInfo.tscn").instantiate(PackedScene.GEN_EDIT_STATE_INSTANCE)
+		thumbnail_info.custom_minimum_size = Vector2((catalog.size.x/3)-10, 60)
+		thumbnail_info.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		thumbnail_info.position.y = thumbnail.custom_minimum_size.y
+
+		thumbnail.add_child(thumbnail_info, true)
+
+		if not thumbnail_info == null:
+			thumbnail_info_text = thumbnail_info.get_child(0)
+
+			if not thumbnail_info_text == null:
+				thumbnail_info_text.text = image_name.get_file().trim_suffix("."+image_name.get_extension()).replace("_", " ").replace("Holding", "holding")
+
+				if " In " in thumbnail_info_text.text:
+					thumbnail_info_text.text = thumbnail_info_text.text.replace(" In ", " in ")
+
+				if " At " in thumbnail_info_text.text:
+					thumbnail_info_text.text = thumbnail_info_text.text.replace(" The ", " at ")
+
 		thumbnail.add_child(thumbnail_texture, true)
 		animes.add_child(thumbnail, true)
 
@@ -409,7 +444,6 @@ func set_thumbnail_texture(index: int) -> void:
 		thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		thumbnail_texture.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
 		thumbnail_texture.pivot_offset = Vector2(thumbnail_texture.custom_minimum_size.x/2, thumbnail_texture.custom_minimum_size.y/2)
-		thumbnail_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
 
 #endregion
 
@@ -508,22 +542,38 @@ func _on_thumbnail_pressed(image: Image, image_save_path: String) -> void:
 			)
 
 
-## TODO: Show a small popup that shows its anime's name and programming language.
 func _on_thumbnail_hovered(button: TextureButton) -> void:
-	
-		if allow_animation == true:
-			var tween: Tween = create_tween()
-			tween.tween_property(button.get_child(0), "self_modulate", Color(1.125, 1.125, 1.125, 1.0), 0.15).set_ease(Tween.EASE_IN_OUT)
-			tween.tween_property(button.get_child(0), "scale", Vector2(1.125, 1.125), 0.25).set_ease(Tween.EASE_IN)
+	var title: PanelContainer = button.get_child(0)
+	var thumb: TextureRect = button.get_child(1)
+
+	if allow_animation == true:
+		var tween_image_modulate: Tween = create_tween()
+		var tween_image_scale: Tween = create_tween()
+		var tween_title_position: Tween = create_tween()
+		tween_image_modulate.tween_property(thumb, "self_modulate", Color(1.125, 1.125, 1.125, 1.0), 0.15).set_ease(Tween.EASE_IN_OUT)
+		tween_image_scale.tween_property(thumb, "scale", Vector2(1.125, 1.125), 0.25).set_ease(Tween.EASE_IN)
+		tween_title_position.tween_property(title, "offset_bottom", 0, 0.15).set_ease(Tween.EASE_IN)
+	else:
+		thumb.self_modulate = Color(1.125, 1.125, 1.125, 1.0)
+		thumb.scale = Vector2(1.125, 1.125)
+		title.offset_bottom = 0
 
 
-## TODO: Hide the small popup.
 func _on_thumbnail_unhover(button: TextureButton) -> void:
-	
-		if allow_animation == true:
-			var tween: Tween = create_tween()
-			tween.tween_property(button.get_child(0), "self_modulate", Color(1.0, 1.0, 1.0, 1.0), 0.15).set_ease(Tween.EASE_OUT_IN)
-			tween.tween_property(button.get_child(0), "scale", Vector2(1.0, 1.0), 0.25).set_ease(Tween.EASE_OUT)
+	var title: PanelContainer = button.get_child(0)
+	var thumb: TextureRect = button.get_child(1)
+
+	if allow_animation == true:
+		var tween_image_modulate: Tween = create_tween()
+		var tween_image_scale: Tween = create_tween()
+		var tween_title_position: Tween = create_tween()
+		tween_image_modulate.tween_property(thumb, "self_modulate", Color(1.0, 1.0, 1.0, 1.0), 0.15).set_ease(Tween.EASE_OUT_IN)
+		tween_image_scale.tween_property(thumb, "scale", Vector2(1.0, 1.0), 0.25).set_ease(Tween.EASE_OUT)
+		tween_title_position.tween_property(title, "offset_bottom", 60, 0.15).set_ease(Tween.EASE_OUT)
+	else:
+		thumb.self_modulate = Color(1.0, 1.0, 1.0, 1.0)
+		thumb.scale = Vector2(1.0, 1.0)
+		title.offset_bottom = 60
 
 
 ## Sets TabContainer's tab buttons' cursor
@@ -616,30 +666,32 @@ func _on_meta_clicked(meta: Variant) -> void:
 
 
 func _on_tab_hovered(tab: int, source: TabContainer) -> void:
-	is_hovered_meta = true
-	tooltip.size = Vector2.ZERO
-	tooltip.show()
+	if not Engine.is_editor_hint():
+		is_hovered_meta = true
+		tooltip.size = Vector2.ZERO
+		tooltip.show()
 
-	if allow_animation == true:	
-		tooltip.scale = Vector2.ZERO
-		var tween: Tween = create_tween()
-		tween.tween_property(tooltip, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BOUNCE)
-	else:
-		tooltip.scale = Vector2.ONE
+		if allow_animation == true:	
+			tooltip.scale = Vector2.ZERO
+			var tween: Tween = create_tween()
+			tween.tween_property(tooltip, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BOUNCE)
+		else:
+			tooltip.scale = Vector2.ONE
 
-	tooltip.text = source.get_tab_metadata(tab)
+		tooltip.text = source.get_tab_metadata(tab)
 
 
 func _on_tab_unhovered() -> void:
-	is_hovered_meta = false
-	if allow_animation == true:
-		var tween: Tween = create_tween()
-		tween.tween_property(tooltip, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_BOUNCE)
-		await tween.finished
-	tooltip.hide()
-	tooltip.text = ""
-	tooltip.size = Vector2.ZERO
-	tooltip.position = Vector2(0, -32)
+	if not Engine.is_editor_hint():
+		is_hovered_meta = false
+		if allow_animation == true:
+			var tween: Tween = create_tween()
+			tween.tween_property(tooltip, "scale", Vector2.ZERO, 0.15).set_trans(Tween.TRANS_BOUNCE)
+			await tween.finished
+		tooltip.hide()
+		tooltip.text = ""
+		tooltip.size = Vector2.ZERO
+		tooltip.position = Vector2(0, -32)
 
 
 func _process(_delta: float) -> void:
@@ -697,3 +749,17 @@ func format_output_prints(string: String, godot_console_args: Array, logs_text_a
 	else:
 		print_rich(string % godot_console_args)
 		push_logs(string % logs_text_args)
+
+
+func _on_Browse_Gals_resized(source: Control) -> void:
+	if not source.get_children().is_empty():
+		for thumbnail in source.get_children():
+			# Main parent
+			thumbnail.custom_minimum_size = Vector2(
+			(catalog.size.x/3)-10, (catalog.size.y/3)-10)
+			# Title
+			thumbnail.get_child(1).custom_minimum_size = Vector2(
+			(catalog.size.x/3)-10, (catalog.size.y/3)-10)
+			# Image
+			thumbnail.get_child(0).custom_minimum_size = Vector2(
+			(catalog.size.x/3)-10, 60)

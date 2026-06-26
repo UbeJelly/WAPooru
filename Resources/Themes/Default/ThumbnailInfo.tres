@@ -1,0 +1,19 @@
+[gd_resource type="Theme" format=3 uid="uid://cq13b0dgeqmd6"]
+
+[sub_resource type="Gradient" id="Gradient_pocue"]
+interpolation_mode = 2
+offsets = PackedFloat32Array(0.15023474, 0.64788735, 1)
+colors = PackedColorArray(0.44214872, 0.31024832, 0.9388524, 1, 0.7058824, 0.32941177, 0.9411765, 1, 0.8805013, 0.69373506, 0.973172, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_xucta"]
+gradient = SubResource("Gradient_pocue")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_vqoel"]
+texture = SubResource("GradientTexture1D_xucta")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lf51t"]
+
+[resource]
+PanelContainer/styles/panel = SubResource("StyleBoxTexture_vqoel")
+RichTextLabel/colors/default_color = Color(1, 1, 1, 1)
+RichTextLabel/styles/normal = SubResource("StyleBoxEmpty_lf51t")

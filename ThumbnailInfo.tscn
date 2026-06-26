@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://bamfvoe2k0upn"]
+
+[ext_resource type="Theme" uid="uid://cq13b0dgeqmd6" path="res://Resources/Themes/Default/ThumbnailInfo.tres" id="1_prw3v"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_prw3v"]
+
+[node name="ThumbnailInfo" type="PanelContainer" unique_id=1324658409]
+z_index = 1
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 0.9990001
+anchor_bottom = 1.0
+offset_top = -47.66667
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme = ExtResource("1_prw3v")
+
+[node name="Text" type="RichTextLabel" parent="." unique_id=1254732952]
+layout_mode = 2
+focus_mode = 0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_prw3v")
+scroll_active = false
+shortcut_keys_enabled = false
+horizontal_alignment = 1
+vertical_alignment = 1
+meta_underlined = false
+hint_underlined = false
+threaded = true

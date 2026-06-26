@@ -8,6 +8,8 @@ Fetches images of anime girls with programming books from https://github.com/cat
 
 You can click on a thumbnail to save the image at `~/Documents/GALerie/Anime_Girls`, and click on any languages to load its images.
 
+![preview.mp4](.github/vid/preview.mp4)
+
 ### Logs
 
 There's a `Logs` section where it keeps track of some things in the background. It also `print_rich()` on Godot's terminal but only with supported built-in effects, i.e. no custom effects.
