@@ -1,5 +1,5 @@
 @tool class_name GALerieClient extends HTTPRequest
-## GALerie v0.15.1 - Gals and Programming Books Gallery
+## GALerie v0.16.2 - Gals and Programming Books Gallery
 ##
 ## Fetches images of anime girls with programming books from [url]https://github.com/cat-milk/Anime-Girls-Holding-Programming-Books[/url] thru Github REST API.
 
@@ -47,6 +47,11 @@ var headers := [
 @onready var logs_text: RichTextLabel = $%LogsText
 @onready var tooltip: RichTextLabel = $%Tooltip
 @onready var author_pfp: TextureRect = $%ProfilePic
+
+@onready var saved_count: RichTextLabel = $%SavedCount
+@onready var saved_sizes: RichTextLabel = $%SavedSize
+@onready var cache_count: RichTextLabel = $%CacheCount
+@onready var cache_sizes: RichTextLabel = $%CacheSize
 
 @onready var push_log_output_toggle: CheckButton = $%PushLogOutputToggle
 @onready var allow_animation_toggle: CheckButton = $%EnableAnimationsButton
@@ -113,6 +118,30 @@ func set_author_pfp(animated: bool) -> void:
 	author_pfp.texture.pause = !animated
 
 
+func set_status_bar(download_path: String, caching_path: String) -> void:
+	var download_dir = DirAccess.open(download_path)
+	var download_dir_count: int = download_dir.get_files().size()
+	var download_file_size: int = 0
+	saved_count.text = "Saved images: %s" % download_dir_count
+
+	if download_dir:
+		for file in download_dir.get_files():
+			download_file_size += FileAccess.get_size(download_path+"/"+file)
+
+	saved_sizes.text = "Saved size: %s" % String.humanize_size(download_file_size).replacen("iB", "B")
+
+	var caching_dir = DirAccess.open(caching_path)
+	var caching_dir_count: int = caching_dir.get_files().size()
+	var caching_file_size: int = 0
+	cache_count.text = "Cached images: %s" % caching_dir_count
+
+	if caching_dir:
+		for file in caching_dir.get_files():
+			caching_file_size += FileAccess.get_size(caching_path+"/"+file)
+
+	cache_sizes.text = "Cache size: %s" % String.humanize_size(caching_file_size).replacen("iB", "B")
+
+
 func _init_settings() -> void:
 	load_cached_files(cache_path)
 
@@ -171,6 +200,9 @@ func _init_settings() -> void:
 		roll_fx._set("animated", false)
 
 	set_author_pfp(allow_animation)
+
+	if not Engine.is_editor_hint():
+		set_status_bar(anime_path, cache_path)
 
 #endregion
 
@@ -261,13 +293,13 @@ func GALerieClient(url: String, endpoint: String, method: String) -> void:
 				format_output_prints(
 					success_run,
 					{ "color": "green", "method": method },
-					{ "color": "2aa300", "method": method })
+					{ "color": "forest_green", "method": method })
 		else:
 			if push_log_output == true:
 				format_output_prints(
 					"[color={color}][b]❌[/b] {method}() failed.[/color]",
 					{ "color": "red", "method": method },
-					{ "color": "cc0000", "method": method })
+					{ "color": "crimson", "method": method })
 	else:
 		if push_log_output == true:
 			format_output_prints(
@@ -402,6 +434,7 @@ func set_thumbnail_texture(index: int) -> void:
 						image_name = i_url[index]["path"]
 						var texture_res_path: String = cache_path+"/%s.res" % image_name
 						ResourceSaver.save(texture, texture_res_path)
+						set_status_bar(anime_path, cache_path)
 						thumbnail_texture.texture = texture
 			else:
 				print("Blob not found, nothing to make Image resource from.")
@@ -416,7 +449,7 @@ func set_thumbnail_texture(index: int) -> void:
 						"name": image_name.get_file(),
 						"dots": "[wave]...[/wave]"
 					}, {
-						"color": "2aa300",
+						"color": "forest_green",
 						"name": image_name.get_file(),
 						"dots": "[bounce]...[/bounce]"
 					})
@@ -430,7 +463,7 @@ func set_thumbnail_texture(index: int) -> void:
 						"name": image_name.get_file(),
 						"dots": "[wave]...[/wave]"
 					}, {
-						"color": "2aa300",
+						"color": "forest_green",
 						"name": image_name.get_file(),
 						"dots": "[bounce]...[/bounce]"
 					})
@@ -444,7 +477,7 @@ func set_thumbnail_texture(index: int) -> void:
 						"name": image_name.get_file().replace(
 							"."+image_name.get_extension(), "")
 					}, {
-						"color": "2aa300",
+						"color": "forest_green",
 						"name": image_name.get_file()
 					})
 
@@ -499,7 +532,7 @@ func set_thumbnail_texture(index: int) -> void:
 			format_output_prints(
 				"[color={color}][b]✓[/b][/color] {name} thumbnail loaded successfully.",
 				{ "color": "green", "name": image_name.get_file() },
-				{ "color": "2aa300", "name": image_name.get_file()})
+				{ "color": "forest_green", "name": image_name.get_file()})
 
 		thumbnail_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -598,13 +631,12 @@ func _on_thumbnail_pressed(image: Image, image_save_path: String) -> void:
 						"[/url]\n"
 				}, {
 					"status":\
-						"[color=2aa300][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths),
+						"[color=forest_green][b]✓ Successfully saved[/b][/color] [url underline=always tooltip='View image' href={file}]".format(paths),
 					"on":\
 						"[/url] on [url underline=always tooltip='Open folder' href={dir}]".format(paths),
 					"end":\
 						"[/url]\n"
 				})
-
 	else:
 		if push_log_output == true:
 			format_output_prints(
@@ -617,12 +649,14 @@ func _on_thumbnail_pressed(image: Image, image_save_path: String) -> void:
 						"\n"
 				}, {
 					"status":\
-						"[color=cc0000][b]❌ Failed to save[/b][/color] ",
+						"[color=crimson][b]❌ Failed to save[/b][/color] ",
 					"on":\
 						" on ",
 					"end":\
 						"\n"
 				})
+
+	set_status_bar(anime_path, cache_path)
 
 
 func _on_thumbnail_hovered(button: TextureButton) -> void:
@@ -796,29 +830,37 @@ func _on_child_entered_tree(node: Node, source: Node) -> void:
 func _on_button_pressed(source: BaseButton) -> void:
 	match source.name:
 		"TrashImageCacheButton":
-			move_to_trash_cached_files(cache_path)
+			if move_to_trash_cached_files(cache_path) == OK:
+				format_output_prints(
+					"\n[color={color}]MOVED TO TRASH[/color] image caches.",
+					{ "color": "red" }, { "color": "crimson" })
 		"DeleteImageCacheButton":
-			delete_cached_files(cache_path)
+			if delete_cached_files(cache_path) == OK:
+				format_output_prints(
+					"\n[color={color}]PERMANENTLY DELETED[/color] image caches.",
+					{ "color": "red" }, { "color": "crimson" })
 
 
-## Moves to trash the saved texture resources from cache_path.
+## Moves to trash the saved texture resources from cache_path. Returns OK if successful.
 ## [param path] is the directory of the cached files.
-func move_to_trash_cached_files(path: String) -> void:
+func move_to_trash_cached_files(path: String) -> Error:
 	var dir = DirAccess.open(path)
+	var error: Error = ERR_FILE_BAD_PATH
 	if dir:
 		for file in dir.get_files():
-			if file.get_extension().to_lower() == "res":
-				OS.move_to_trash(ProjectSettings.globalize_path(file))
+			error = OS.move_to_trash(ProjectSettings.globalize_path(path+"/"+file))
+	return error
 
 
-## Deletes permanently the saved texture resources from cache_path.
+## Deletes permanently the saved texture resources from cache_path. Returns OK if successful.
 ## [param path] is the directory of the cached files.
-func delete_cached_files(path: String) -> void:
+func delete_cached_files(path: String) -> Error:
 	var dir = DirAccess.open(path)
+	var error: Error = ERR_FILE_BAD_PATH
 	if dir:
 		for file in dir.get_files():
-			if file.get_extension().to_lower() == "res":
-				dir.remove(file)
+			error = dir.remove(ProjectSettings.globalize_path("./"+file))
+	return error
 
 
 ## Formats the string outputs for the Godot console and Logs' RichTextLabel.

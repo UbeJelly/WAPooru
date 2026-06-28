@@ -18,6 +18,7 @@ config/use_custom_user_dir=true
 config/custom_user_dir_name="GALerie"
 config/features=PackedStringArray("4.7", "Forward Plus")
 boot_splash/bg_color=Color(0.8, 0.57254905, 0.9411765, 1)
+boot_splash/stretch_mode=0
 boot_splash/image="uid://djqhqeij382li"
 config/icon="uid://djqhqeij382li"
 config/windows_native_icon="res://Assets/GALerie_icon.ico"
