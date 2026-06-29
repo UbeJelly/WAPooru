@@ -69,24 +69,25 @@ current_tab = 0
 
 [node name="🔍 Browse" type="MarginContainer" parent="GUI/Margin/VBox/Sections" unique_id=356299535]
 layout_mode = 2
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
 metadata/_tab_index = 0
 metadata/tooltip_text = "Browse anime girls with programming books"
 
-[node name="Panel" type="PanelContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse" unique_id=133272211]
-layout_mode = 2
-
-[node name="Sections" type="HSplitContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel" unique_id=1727472176]
+[node name="Sections" type="HSplitContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse" unique_id=1727472176]
 layout_mode = 2
 size_flags_vertical = 3
 split_offsets = PackedInt32Array(240)
 split_offset = 240
 
-[node name="Langs" type="ScrollContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections" unique_id=1292901501 groups=["Scrollbars"]]
+[node name="Langs" type="ScrollContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Sections" unique_id=1292901501 groups=["Scrollbars"]]
 layout_mode = 2
 follow_focus = true
 draw_focus_border = true
 
-[node name="Margin" type="MarginContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections/Langs" unique_id=519294174]
+[node name="Margin" type="MarginContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Sections/Langs" unique_id=519294174]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -95,20 +96,20 @@ theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 5
 theme_override_constants/margin_bottom = 0
 
-[node name="Langs" type="VBoxContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections/Langs/Margin" unique_id=72143297]
+[node name="Langs" type="VBoxContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Sections/Langs/Margin" unique_id=72143297]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Catalog" type="ScrollContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections" unique_id=2035236468 groups=["Scrollbars"]]
+[node name="Catalog" type="ScrollContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Sections" unique_id=2035236468 groups=["Scrollbars"]]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 follow_focus = true
 draw_focus_border = true
 
-[node name="Margin" type="MarginContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections/Catalog" unique_id=539742964]
+[node name="Margin" type="MarginContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Sections/Catalog" unique_id=539742964]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -117,7 +118,7 @@ theme_override_constants/margin_top = 0
 theme_override_constants/margin_right = 0
 theme_override_constants/margin_bottom = 0
 
-[node name="Gals" type="HFlowContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections/Catalog/Margin" unique_id=1735141251]
+[node name="Gals" type="HFlowContainer" parent="GUI/Margin/VBox/Sections/🔍 Browse/Sections/Catalog/Margin" unique_id=1735141251]
 unique_name_in_owner = true
 layout_mode = 2
 alignment = 1
@@ -331,6 +332,48 @@ scroll_active = false
 vertical_alignment = 1
 threaded = true
 
+[node name="TrashSavedImage" type="HBoxContainer" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox" unique_id=892204576]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="TrashSavedImageButton" type="Button" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/TrashSavedImage" unique_id=865765082]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Trash saved image"
+
+[node name="Info" type="RichTextLabel" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/TrashSavedImage" unique_id=979626502]
+clip_contents = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = ExtResource("3_vvdw2")
+bbcode_enabled = true
+text = "Moves saved images to trash."
+fit_content = true
+scroll_active = false
+threaded = true
+
+[node name="DeleteSavedImage" type="HBoxContainer" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox" unique_id=480143042]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="DeleteSavedImageButton" type="Button" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/DeleteSavedImage" unique_id=1698255948]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "Delete saved image"
+
+[node name="Info" type="RichTextLabel" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/DeleteSavedImage" unique_id=214398766]
+clip_contents = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = ExtResource("3_vvdw2")
+bbcode_enabled = true
+text = "[color=crimson]Permanently deletes[/color] the saved images. Useful to free memory."
+fit_content = true
+scroll_active = false
+threaded = true
+
 [node name="TrashImageCache" type="HBoxContainer" parent="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox" unique_id=1599583753]
 layout_mode = 2
 theme_override_constants/separation = 30
@@ -444,7 +487,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/normal = ExtResource("3_vvdw2")
 bbcode_enabled = true
-text = "GALerie v0.16.3 by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]"
+text = "GALerie v0.16.4 by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
@@ -604,7 +647,7 @@ threaded = true
 
 [connection signal="request_completed" from="." to="." method="_on_request_completed"]
 [connection signal="tab_hovered" from="GUI/Margin/VBox/Sections" to="." method="_on_tab_hovered" flags=18]
-[connection signal="resized" from="GUI/Margin/VBox/Sections/🔍 Browse/Panel/Sections/Catalog/Margin/Gals" to="." method="_on_Browse_Gals_resized" flags=18]
+[connection signal="resized" from="GUI/Margin/VBox/Sections/🔍 Browse/Sections/Catalog/Margin/Gals" to="." method="_on_Browse_Gals_resized" flags=18]
 [connection signal="child_entered_tree" from="GUI/Margin/VBox/Sections/📃 Logs/LogsText" to="." method="_on_child_entered_tree" flags=18]
 [connection signal="meta_clicked" from="GUI/Margin/VBox/Sections/📃 Logs/LogsText" to="." method="_on_meta_clicked"]
 [connection signal="meta_hover_ended" from="GUI/Margin/VBox/Sections/📃 Logs/LogsText" to="." method="_on_meta_hover_exited"]
@@ -614,6 +657,8 @@ threaded = true
 [connection signal="child_entered_tree" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/AnimationSettings/VBox/FollowReducedMotions/Info" to="." method="_on_child_entered_tree" flags=18]
 [connection signal="meta_hover_ended" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/AnimationSettings/VBox/FollowReducedMotions/Info" to="." method="_on_meta_hover_exited"]
 [connection signal="meta_hover_started" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/AnimationSettings/VBox/FollowReducedMotions/Info" to="." method="_on_meta_hover_entered" flags=18]
+[connection signal="pressed" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/TrashSavedImage/TrashSavedImageButton" to="." method="_on_button_pressed" flags=18]
+[connection signal="pressed" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/DeleteSavedImage/DeleteSavedImageButton" to="." method="_on_button_pressed" flags=18]
 [connection signal="pressed" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/TrashImageCache/TrashImageCacheButton" to="." method="_on_button_pressed" flags=18]
 [connection signal="pressed" from="GUI/Margin/VBox/Sections/⚙️ Settings/Buttons/DeleteSettings/VBox/DeleteImageCache/DeleteImageCacheButton" to="." method="_on_button_pressed" flags=18]
 [connection signal="tab_hovered" from="GUI/Margin/VBox/Sections/📚 Help/Sections/About/Sections" to="." method="_on_tab_hovered" flags=18]
