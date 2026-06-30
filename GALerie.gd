@@ -1,5 +1,5 @@
 @tool class_name GALerieClient extends HTTPRequest
-## GALerie v0.17.1 - Gals and Programming Books Gallery
+## GALerie v0.18.2 - Gals and Programming Books Gallery
 ##
 ## Fetches images of anime girls with programming books from [url]https://github.com/cat-milk/Anime-Girls-Holding-Programming-Books[/url] thru Github REST API.
 
@@ -39,6 +39,12 @@ var headers := [
 	"Authorization: Bearer %s"
 ]
 
+@export_category("Debug")
+@export var load_nodes := true		## Load buttons and thumbnails when in Editor.
+@export var source_ver := "v0.18.1"	## Current source version.
+## TODO: When updated source_ver, update also the version text on the GUI and
+## Help > About > AuthorHandle section's text
+
 @export_category("Terminal")
 @export var print_data := false		## Show or hide the requested data.
 
@@ -49,12 +55,15 @@ var headers := [
 @onready var logs_text: RichTextLabel = $%LogsText
 @onready var tooltip: RichTextLabel = $%Tooltip
 @onready var author_pfp: TextureRect = $%ProfilePic
+@onready var author_usr: RichTextLabel = $%AuthorHandle
 @onready var status_bar: HBoxContainer = $%StatusBar
 
 @onready var saved_count: RichTextLabel = $%SavedCount
 @onready var saved_sizes: RichTextLabel = $%SavedSize
 @onready var cache_count: RichTextLabel = $%CacheCount
 @onready var cache_sizes: RichTextLabel = $%CacheSize
+
+@onready var version: RichTextLabel = $%Version
 
 @onready var push_log_output_toggle: CheckButton = $%PushLogOutputToggle
 @onready var allow_animation_toggle: CheckButton = $%EnableAnimationsButton
@@ -147,6 +156,21 @@ func set_status_bar(download_path: String, caching_path: String) -> void:
 		cache_sizes.text = "Cache size: %s" % String.humanize_size(caching_file_size).replacen("iB", "B")
 
 
+func sync_version_texts() -> void:
+	# Automate sync of version texts upon Source Ver update in Editor nodes.
+	if Engine.is_editor_hint():
+		var inspector = EditorInterface.get_inspector()
+		inspector.property_edited.connect(
+			func(property: String) -> void: if property == "source_ver":
+				set_version(inspector.get_edited_object().source_ver))
+
+
+func set_version(text: String) -> void:
+	var v: Dictionary[String, String] = { "ver": text }
+	author_usr.text = "GALerie {ver} by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]".format(v)
+	version.text = "[color=purple][url underline=hover tooltip='Visit Github repo' href=https://github.com/UbeJelly/GALerie]{ver}[/url][/color]".format(v)
+
+
 func _init_settings() -> void:
 	load_cached_files(cache_path)
 
@@ -206,6 +230,8 @@ func _init_settings() -> void:
 
 	set_author_pfp(allow_animation)
 	set_status_bar(anime_path, cache_path)
+	sync_version_texts()
+	set_version(source_ver)
 
 #endregion
 
@@ -819,6 +845,8 @@ func _process(_delta: float) -> void:
 		var mouse_position = $GUI.get_global_mouse_position()
 		var tooltip_offset := Vector2(16, 12)
 		tooltip.position = mouse_position + tooltip_offset
+		tooltip.position.x = clampf(tooltip.position.x, 0.0, gui.size.x - tooltip_offset.x - tooltip.size.x)
+		tooltip.position.y = clampf(tooltip.position.y, 0.0, gui.size.y + tooltip_offset.y - tooltip.size.y)
 
 
 func _on_child_entered_tree(node: Node, source: Node) -> void:

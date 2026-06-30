@@ -41,6 +41,7 @@ border_color = Color(0.7490196, 0.7490196, 0.7490196, 1)
 [node name="GALerie" type="HTTPRequest" unique_id=1501397109]
 use_threads = true
 script = ExtResource("1_l1wfd")
+source_ver = "v0.18.2"
 
 [node name="GUI" type="Panel" parent="." unique_id=329452866]
 anchors_preset = 15
@@ -483,11 +484,12 @@ texture = SubResource("AnimatedTexture_vvdw2")
 stretch_mode = 4
 
 [node name="AuthorHandle" type="RichTextLabel" parent="GUI/Margin/VBox/Sections/📚 Help/Sections/About/Sections/😎 About/Center/About" unique_id=1014717870]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/normal = ExtResource("3_vvdw2")
 bbcode_enabled = true
-text = "GALerie v0.17.1 by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]"
+text = "GALerie v0.18.2 by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
@@ -636,6 +638,27 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 text = "📁 Open caches folder"
 
+[node name="VerTex" type="MarginContainer" parent="GUI" unique_id=1939823048]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -70.0
+offset_bottom = 43.0
+grow_horizontal = 0
+
+[node name="Version" type="RichTextLabel" parent="GUI/VerTex" unique_id=1463218441]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/normal = ExtResource("3_vvdw2")
+bbcode_enabled = true
+text = "[color=purple][url underline=hover tooltip='Visit Github repo' href=https://github.com/UbeJelly/GALerie]v0.18.2[/url][/color]"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 2
+vertical_alignment = 1
+
 [node name="Tooltip" type="RichTextLabel" parent="GUI" unique_id=971041386]
 unique_name_in_owner = true
 visible = false
@@ -694,3 +717,7 @@ threaded = true
 [connection signal="meta_hover_started" from="GUI/Margin/VBox/Sections/📚 Help/Sections/About/Sections/©️ License/Center/Program" to="." method="_on_meta_hover_entered" flags=18]
 [connection signal="pressed" from="GUI/Margin/VBox/StatusBar/OpenImagesDir" to="." method="_on_button_pressed" flags=18]
 [connection signal="pressed" from="GUI/Margin/VBox/StatusBar/OpenCachesDir" to="." method="_on_button_pressed" flags=18]
+[connection signal="child_entered_tree" from="GUI/VerTex/Version" to="." method="_on_child_entered_tree" flags=18]
+[connection signal="meta_clicked" from="GUI/VerTex/Version" to="." method="_on_meta_clicked"]
+[connection signal="meta_hover_ended" from="GUI/VerTex/Version" to="." method="_on_meta_hover_exited"]
+[connection signal="meta_hover_started" from="GUI/VerTex/Version" to="." method="_on_meta_hover_entered" flags=18]
