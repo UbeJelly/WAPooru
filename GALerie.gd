@@ -1,5 +1,5 @@
 @tool class_name GALerieClient extends HTTPRequest
-## GALerie v0.18.2 - Gals and Programming Books Gallery
+## GALerie v0.19.1 - Gals and Programming Books Gallery
 ##
 ## Fetches images of anime girls with programming books from [url]https://github.com/cat-milk/Anime-Girls-Holding-Programming-Books[/url] thru Github REST API.
 
@@ -727,6 +727,7 @@ func set_tabs() -> void:
 		var tabbar: TabBar = tab.get_tab_bar()
 		tabbar.mouse_default_cursor_shape = Control.CursorShape.CURSOR_POINTING_HAND
 		tabbar.mouse_exited.connect(_on_tab_unhovered)
+		tabbar.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 
 		for i in tab.get_child_count():
 			tab.set_tab_metadata(i, tab.get_child(i).get_meta("tooltip_text"))
@@ -865,6 +866,14 @@ func _on_button_pressed(source: BaseButton) -> void:
 		"DeleteImageCacheButton":	remove_image_files(cache_path, Remove.DELETE)
 		"OpenImagesDir":			open_images_folder(anime_path)
 		"OpenCachesDir":			open_images_folder(cache_path)
+		"StopFetch":				stop_fetching_imgs()
+
+
+func stop_fetching_imgs() -> void:
+	cancel_request()
+	format_output_prints(
+		"\n[color={color}][b]❌ CANCELLED [/b][/color] FETCHING IMAGES.",
+		{ "color": "red" }, { "color": "crimson" })
 
 
 ## Opens the saved images or caches directory depending on the mode.
@@ -880,12 +889,12 @@ func open_images_folder(path: String) -> void:
 
 	if error == OK: if push_log_output == true:
 		format_output_prints(
-			"[color={color}][b]✓[/b][/color] Opened {type} images folder successfully.",
+			"\n[color={color}][b]✓[/b][/color] Opened {type} images folder successfully.",
 			{ "color": "green", "type": dir_name },
 			{ "color": "forest_green", "type": dir_name })
 	else: if push_log_output == true:
 		format_output_prints(
-			"[color={color}][b]❌ Failed to open[/b][/color] {type} images folder.",
+			"\n[color={color}][b]❌ Failed to open[/b][/color] {type} images folder.",
 			{ "color": "red", "type": dir_name },
 			{ "color": "crimson", "type": dir_name })
 

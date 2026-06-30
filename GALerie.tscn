@@ -41,7 +41,7 @@ border_color = Color(0.7490196, 0.7490196, 0.7490196, 1)
 [node name="GALerie" type="HTTPRequest" unique_id=1501397109]
 use_threads = true
 script = ExtResource("1_l1wfd")
-source_ver = "v0.18.2"
+source_ver = "v0.19.1"
 
 [node name="GUI" type="Panel" parent="." unique_id=329452866]
 anchors_preset = 15
@@ -67,6 +67,7 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 current_tab = 0
+clip_tabs = false
 
 [node name="🔍 Browse" type="MarginContainer" parent="GUI/Margin/VBox/Sections" unique_id=356299535]
 layout_mode = 2
@@ -489,7 +490,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_styles/normal = ExtResource("3_vvdw2")
 bbcode_enabled = true
-text = "GALerie v0.18.2 by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]"
+text = "GALerie v0.19.1 by [color=purple][url underline=hover tooltip='Visit Github profile' href=https://github.com/UbeJelly]@UbeJelly[/url][/color]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
@@ -592,6 +593,8 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, 2)
 theme_override_styles/normal = ExtResource("3_vvdw2")
 text = "Saved images:"
 fit_content = true
@@ -602,6 +605,8 @@ autowrap_mode = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, 2)
 theme_override_styles/normal = ExtResource("3_vvdw2")
 text = "Saved size:"
 fit_content = true
@@ -612,6 +617,8 @@ autowrap_mode = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, 2)
 theme_override_styles/normal = ExtResource("3_vvdw2")
 text = "Cached images:"
 fit_content = true
@@ -622,11 +629,18 @@ autowrap_mode = 0
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+offset_transform_enabled = true
+offset_transform_position = Vector2(0, 2)
 theme_override_styles/normal = ExtResource("3_vvdw2")
 text = "Cache size:"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
+
+[node name="StopFetch" type="Button" parent="GUI/Margin/VBox/StatusBar" unique_id=1935507233]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "🛑 Stop fetch"
 
 [node name="OpenImagesDir" type="Button" parent="GUI/Margin/VBox/StatusBar" unique_id=587546798]
 layout_mode = 2
@@ -650,9 +664,10 @@ grow_horizontal = 0
 [node name="Version" type="RichTextLabel" parent="GUI/VerTex" unique_id=1463218441]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 2
 theme_override_styles/normal = ExtResource("3_vvdw2")
 bbcode_enabled = true
-text = "[color=purple][url underline=hover tooltip='Visit Github repo' href=https://github.com/UbeJelly/GALerie]v0.18.2[/url][/color]"
+text = "[color=purple][url underline=hover tooltip='Visit Github repo' href=https://github.com/UbeJelly/GALerie]v0.19.1[/url][/color]"
 fit_content = true
 scroll_active = false
 autowrap_mode = 0
@@ -715,6 +730,7 @@ threaded = true
 [connection signal="meta_clicked" from="GUI/Margin/VBox/Sections/📚 Help/Sections/About/Sections/©️ License/Center/Program" to="." method="_on_meta_clicked"]
 [connection signal="meta_hover_ended" from="GUI/Margin/VBox/Sections/📚 Help/Sections/About/Sections/©️ License/Center/Program" to="." method="_on_meta_hover_exited"]
 [connection signal="meta_hover_started" from="GUI/Margin/VBox/Sections/📚 Help/Sections/About/Sections/©️ License/Center/Program" to="." method="_on_meta_hover_entered" flags=18]
+[connection signal="pressed" from="GUI/Margin/VBox/StatusBar/StopFetch" to="." method="_on_button_pressed" flags=18]
 [connection signal="pressed" from="GUI/Margin/VBox/StatusBar/OpenImagesDir" to="." method="_on_button_pressed" flags=18]
 [connection signal="pressed" from="GUI/Margin/VBox/StatusBar/OpenCachesDir" to="." method="_on_button_pressed" flags=18]
 [connection signal="child_entered_tree" from="GUI/VerTex/Version" to="." method="_on_child_entered_tree" flags=18]
