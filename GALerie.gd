@@ -1,5 +1,5 @@
 @tool class_name GALerieClient extends HTTPRequest
-## GALerie v0.19.1 - Gals and Programming Books Gallery
+## GALerie v0.19.6 - Gals and Programming Books Gallery
 ##
 ## Fetches images of anime girls with programming books from [url]https://github.com/cat-milk/Anime-Girls-Holding-Programming-Books[/url] thru Github REST API.
 
@@ -26,10 +26,10 @@ var blobs: Array = []			## List of img blobs to use as texture
 var cache_blobs: Array = []		## List of cached texture resources
 
 var files_path: String = OS.get_system_dir(OS.SYSTEM_DIR_DOCUMENTS)+"/GALerie"
-var anime_path: String = files_path+"/Anime_Girls"			## The download directory
-var config_sav: String = files_path+"/settings.json"		## The settings save file
-var cache_path: String = OS.get_user_data_dir()+"/cache"	## %AppData%/Roaming/GALerie/cache
-var saves_path: String = cache_path+"/caches.json"			## Cache data save file
+var anime_path: String = files_path+"/Anime_Girls"		## The download directory
+var config_sav: String = files_path+"/settings.json"	## The settings save file
+var cache_path: String = OS.get_user_data_dir()+"/cache"## %AppData%/Roaming/GALerie/cache
+var saves_path: String = cache_path+"/caches.json"		## Cache data save file
 
 ## Path of auth.json which contains data of repo owner and API token
 var _AUTH_PATH: String = ProjectSettings.globalize_path("res://.env/%s")
@@ -40,10 +40,8 @@ var headers := [
 ]
 
 @export_category("Debug")
-@export var load_nodes := true		## Load buttons and thumbnails when in Editor.
-@export var source_ver := "v0.18.1"	## Current source version.
-## TODO: When updated source_ver, update also the version text on the GUI and
-## Help > About > AuthorHandle section's text
+@export var load_nodes := true		## Load buttons and thumbnails at Editor load.
+@export var source_ver := "v0.19.6"	## Current source version.
 
 @export_category("Terminal")
 @export var print_data := false		## Show or hide the requested data.
@@ -283,15 +281,16 @@ func _ready() -> void:
 	set_tabs()
 	set_bars()
 
-	get_repo_tree()
-	await request_completed
-	set_langs_buttons(trees)
+	if load_nodes == true:
+		get_repo_tree()
+		await request_completed
+		set_langs_buttons(trees)
 
-	var endpoint: String = trees[randi_range(0, trees.size()-1)]["url"].trim_prefix(git_url)
-	get_language(endpoint)
-	await request_completed
+		var endpoint: String = trees[randi_range(0, trees.size()-1)]["url"].trim_prefix(git_url)
+		get_language(endpoint)
+		await request_completed
 
-	set_anime_thumbnails(i_url)
+		set_anime_thumbnails(i_url)
 
 #endregion
 
@@ -553,9 +552,10 @@ func set_thumbnail_texture(index: int) -> void:
 				if " At " in thumbnail_info_text.text:
 					thumbnail_info_text.text = thumbnail_info_text.text.replace(" The ", " at ")
 
+		thumbnail.offset_transform_enabled = true
+		thumbnail.offset_transform_scale = Vector2.ZERO
 		thumbnail.add_child(thumbnail_texture, true)
-		animes.add_child(thumbnail, true)
-
+		
 		if push_log_output == true:
 			format_output_prints(
 				"[color={color}][b]✓[/b][/color] {name} thumbnail loaded successfully.",
@@ -566,6 +566,12 @@ func set_thumbnail_texture(index: int) -> void:
 		thumbnail_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		thumbnail_texture.custom_minimum_size = Vector2((catalog.size.x/3)-10, (catalog.size.y/3)-10)
 		thumbnail_texture.pivot_offset = Vector2(thumbnail_texture.custom_minimum_size.x/2, thumbnail_texture.custom_minimum_size.y/2)
+
+		animes.add_child(thumbnail, true)
+
+		var tween: Tween = create_tween()
+		tween.tween_property(thumbnail, "offset_transform_scale", Vector2.ONE, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+		await tween.loop_finished
 
 #endregion
 
@@ -871,9 +877,10 @@ func _on_button_pressed(source: BaseButton) -> void:
 
 func stop_fetching_imgs() -> void:
 	cancel_request()
-	format_output_prints(
-		"\n[color={color}][b]❌ CANCELLED [/b][/color] FETCHING IMAGES.",
-		{ "color": "red" }, { "color": "crimson" })
+	if push_log_output == true:
+		format_output_prints(
+			"\n[color={color}][b]❌ CANCELLED[/b][/color] FETCHING IMAGES.",
+			{ "color": "red" }, { "color": "crimson" })
 
 
 ## Opens the saved images or caches directory depending on the mode.
@@ -917,7 +924,7 @@ func remove_image_files(path: String, mode: int) -> void:
 						ProjectSettings.globalize_path(path+"/"+file))
 			if error == OK: if push_log_output == true:
 				format_output_prints(
-					"\n[color={color}]MOVED TO TRASH[/color] {type} images.",
+					"\n[color={color}][b]MOVED TO TRASH[/b][/color] {type} images.",
 					{ "color": "red", "type": dir_name },
 					{ "color": "crimson", "type": dir_name })
 		Remove.DELETE:
@@ -925,7 +932,7 @@ func remove_image_files(path: String, mode: int) -> void:
 				error = dir.remove(ProjectSettings.globalize_path("./"+file))
 			if error == OK: if push_log_output == true:
 				format_output_prints(
-					"\n[color={color}]PERMANENTLY DELETED[/color] {type} images.",
+					"\n[color={color}][b]PERMANENTLY DELETED[/b][/color] {type} images.",
 					{ "color": "red", "type": dir_name },
 					{ "color": "crimson", "type": dir_name })
 
